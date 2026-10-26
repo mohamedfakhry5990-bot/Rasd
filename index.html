@@ -474,6 +474,11 @@ tr.warnrow td:first-child { box-shadow: inset -3px 0 0 var(--bad); }
         R[k] = await read(at(i), kind);
       }
       if (!Object.values(R).some(v => v)) continue;
+      // صف حقيقي = فيه اسم عربي واضح أو إحداثيات منطقية؛ غير كده بقايا من عنوان أو توقيعات
+      const ar = (R['الاسم'] || '').match(/[\u0621-\u064A]/g) || [];
+      const ed = Number(num(R['E_d'])), nd = Number(num(R['N_d']));
+      const coordsOk = ed >= 24 && ed <= 36 && nd >= 22 && nd <= 32;
+      if (ar.length < 8 && !coordsOk) continue;
       R._well = data.indexOf(at(9)); R._raw = Object.assign({}, R); rows.push(R);
     }
     async function readFileNo(c) {
@@ -706,7 +711,6 @@ async function getPool(onMsg) {
       corePath: 'https://cdn.jsdelivr.net/npm/tesseract.js-core@5.1.1',
       langPath, gzip: false
     });
-    await w.setParameters({ preserve_interword_spaces: '1' });
     ws.push({ w, q: Promise.resolve(), busy: 0, psm: '' });
   }
   pool = ws;
