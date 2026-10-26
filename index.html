@@ -62,7 +62,7 @@ section[role="tabpanel"] { display: grid; gap: 16px; }
 .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
 .btn:disabled { opacity: .5; cursor: not-allowed; }
 .btn:focus-visible, .linkbtn:focus-visible, nav button:focus-visible, td[contenteditable]:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-input[type="date"], input[type="text"] { font: inherit; padding: 6px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); }
+input[type="text"] { font: inherit; padding: 6px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); }
 label.field { display: inline-flex; align-items: center; gap: 8px; font-size: .9rem; color: var(--muted); }
 .progress { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 14px 16px; display: grid; gap: 8px; }
 .meter { height: 8px; background: var(--bg); border-radius: 99px; overflow: hidden; }
@@ -120,7 +120,7 @@ tr.warnrow td:first-child { box-shadow: inset -3px 0 0 var(--bad); }
   <section role="tabpanel" id="p-min" aria-labelledby="t-min">
     <p class="lead">ارفع ملف المحاضر (PDF أو صور). كل صف في الجدول يتقري خانة خانة، وبعدها تراجع وتعدّل وتنزّل Excel.</p>
     <div class="bar">
-      <label class="field" for="cdate">تاريخ اللجنة (المكتوب فوق في المحضر) <input type="date" id="cdate"></label>
+      <label class="field" for="cdate">تاريخ اللجنة (المكتوب فوق في المحضر) <input type="text" id="cdate" inputmode="numeric" size="11" placeholder="10/9/2026" dir="ltr"></label>
       <button class="btn" id="apply-min">تطبيق على كل الصفوف</button>
     </div>
     <div class="drop" data-kind="min">
@@ -139,7 +139,7 @@ tr.warnrow td:first-child { box-shadow: inset -3px 0 0 var(--bad); }
   <section role="tabpanel" id="p-clm" aria-labelledby="t-clm" hidden>
     <p class="lead">ارفع صور أو PDF المطالبات (ترخيص أو استهلاك، كل صفحة مطالبة). الإجمالي بيتقري من المبلغ المكتوب بالحروف. الخانات المكتوبة بخط اليد (م وتاريخ الاعتماد) بتكتبها إنت.</p>
     <div class="bar">
-      <label class="field" for="appr">تاريخ الاعتماد للدفعة كلها <input type="date" id="appr"></label>
+      <label class="field" for="appr">تاريخ الاعتماد للدفعة كلها <input type="text" id="appr" inputmode="numeric" size="11" placeholder="20/10/2026" dir="ltr"></label>
       <label class="field" for="mstart">أول رقم م (اختياري) <input type="text" id="mstart" inputmode="numeric" size="7" placeholder="3209"></label>
       <button class="btn" id="apply-clm">تطبيق على كل الصفوف</button>
     </div>
@@ -660,6 +660,14 @@ const $ = s => document.querySelector(s);
 const el = (tag, attrs, ...kids) => { const e = document.createElement(tag); if (attrs) for (const k in attrs) { if (k === 'class') e.className = attrs[k]; else if (k.startsWith('on')) e[k] = attrs[k]; else e.setAttribute(k, attrs[k]); } for (const k of kids) if (k != null) e.append(k); return e; };
 const store = { get(k) { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} } };
 
+// تاريخ مكتوب يوم/شهر/سنة (أو سنة/شهر/يوم) ← YYYY-MM-DD
+function dateField(sel) {
+  const t = Engine.digits($(sel).value || '').trim();
+  let m = t.match(/^(\d{1,2})\D+(\d{1,2})\D+(20\d\d)$/);
+  if (m) return `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`;
+  m = t.match(/^(20\d\d)\D+(\d{1,2})\D+(\d{1,2})$/);
+  return m ? `${m[1]}-${m[2].padStart(2, '0')}-${m[3].padStart(2, '0')}` : '';
+}
 // ---------- الأقسام ----------
 const tabs = ['min', 'clm', 'db', 'about'];
 function show(t) { tabs.forEach(x => { $('#t-' + x).setAttribute('aria-selected', x === t); $('#p-' + x).hidden = x !== t; }); store.set('tab', t); }
@@ -901,11 +909,11 @@ async function run(kind, files) {
         const blank = kind === 'min' ? Object.fromEntries(MIN_HEAD.map(h => [h, ''])) : { 'نوع المطالبة': 'ترخيص' };
         res.rows = [Object.assign(blank, { _warn: res.error || 'مالقيتش بيانات في الصفحة دي' })];
       }
-      const appr = $('#appr').value;
+      const appr = dateField('#appr');
       for (const r of res.rows) {
         delete r._raw;
         r._img = id; r._label = pg.label;
-        if (kind === 'min') { r['الصفحة'] = pg.page; r['تاريخ اللجنة'] = $('#cdate').value || ''; }
+        if (kind === 'min') { r['الصفحة'] = pg.page; r['تاريخ اللجنة'] = dateField('#cdate'); }
         else if (appr) { r['تاريخ اعتماد المطالبة'] = appr; if (r['نوع المطالبة'] === 'استهلاك') r['اعتماد التقادم'] = appr; }
         state[kind].push(r); added++;
       }
@@ -929,11 +937,11 @@ async function run(kind, files) {
   renderTable(kind);
 });
 $('#apply-min').onclick = () => {
-  const d = $('#cdate').value; if (!d) return flash('اختار تاريخ اللجنة الأول.');
+  const d = dateField('#cdate'); if (!d) return flash('اكتب تاريخ اللجنة الأول، زي 10/9/2026.');
   state.min.forEach(r => { r['تاريخ اللجنة'] = d; }); save('min'); renderTable('min');
 };
 $('#apply-clm').onclick = () => {
-  const appr = $('#appr').value, ms = parseInt(Engine.digits($('#mstart').value), 10);
+  const appr = dateField('#appr'), ms = parseInt(Engine.digits($('#mstart').value), 10);
   state.clm.forEach((r, i) => {
     if (appr) { r['تاريخ اعتماد المطالبة'] = appr; r['اعتماد التقادم'] = r['نوع المطالبة'] === 'استهلاك' ? appr : ''; }
     if (!isNaN(ms)) r['م'] = ms + i;
