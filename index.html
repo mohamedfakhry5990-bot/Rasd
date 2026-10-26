@@ -434,6 +434,10 @@ tr.warnrow td:first-child { box-shadow: inset -3px 0 0 var(--bad); }
     const rowTops = cluster(data.map(c => c.y), rowTol);
     const nRows = rowTops.length;
     const nCols = cols.length;
+    // عمود الاسم هو أعرض عمود في أول 4 من اليمين؛ لو عمود "م" مقصوص من الصفحة بنزحزح الترقيم
+    let nameIdx = 1, bw = 0;
+    cols.slice(0, 4).forEach(([a, b2], i) => { if (b2 - a > bw) { bw = b2 - a; nameIdx = i; } });
+    const off = nameIdx - 1;
     const grid2 = Array.from({ length: nRows }, () => Array(nCols).fill(null));
     for (const c of data) {
       const ci = cols.findIndex(([a, b2]) => Math.min(b2, c.x + c.w) - Math.max(a, c.x) > (b2 - a) * 0.5);
@@ -459,7 +463,7 @@ tr.warnrow td:first-child { box-shadow: inset -3px 0 0 var(--bad); }
       return t;
     };
     const rows = [];
-    const extra = nCols - 24; // 1 لو فيه عمود اسم البئر
+    const extra = nCols - off - 24; // 1 لو فيه عمود اسم البئر
     for (let r = 0; r < nRows; r++) {
       onStep && onStep(r, nRows);
       const R = {}; const at = i => grid2[r][i];
@@ -468,7 +472,7 @@ tr.warnrow td:first-child { box-shadow: inset -3px 0 0 var(--bad); }
       for (const k of MIN_COLS) {
         let i = map[k];
         if (k === 'اسم البئر') { if (extra < 1) { R[k] = ''; continue; } }
-        if (i >= nCols) { R[k] = ''; continue; }
+        i += off; if (i < 0 || i >= nCols) { R[k] = ''; continue; }
         const kind = k === 'اسم البئر' ? 'line' : ['الاسم', 'المحافظة', 'المنطقة', 'نوع الخزان', 'الغرض', 'نوع الزراعات', 'ملاحظات'].includes(k) ? 'text' : 'num';
         if (k === 'رقم الملف') { R[k] = await readFileNo(at(i)); continue; }
         R[k] = await read(at(i), kind);
@@ -479,7 +483,7 @@ tr.warnrow td:first-child { box-shadow: inset -3px 0 0 var(--bad); }
       const ed = Number(num(R['E_d'])), nd = Number(num(R['N_d']));
       const coordsOk = ed >= 24 && ed <= 36 && nd >= 22 && nd <= 32;
       if (ar.length < 8 && !coordsOk) continue;
-      R._well = data.indexOf(at(9)); R._raw = Object.assign({}, R); rows.push(R);
+      R._well = data.indexOf(at(9 + off)); R._raw = Object.assign({}, R); rows.push(R);
     }
     async function readFileNo(c) {
       if (!c) return '';
@@ -495,7 +499,7 @@ tr.warnrow td:first-child { box-shadow: inset -3px 0 0 var(--bad); }
       seen.set(c, best);
       return best;
     }
-    return { rows: finishMinutes(rows, parseTitle(title), nCols), cols: nCols };
+    return { rows: finishMinutes(rows, parseTitle(title), nCols - off), cols: nCols - off };
   }
 
   function normPurpose(p, monitor) {
