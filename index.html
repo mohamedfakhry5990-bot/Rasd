@@ -1,0 +1,1084 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#24408e">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="رصد">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>رصد</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=Readex+Pro:wght@500;700&display=swap" media="print" onload="this.media='all'">
+<style>
+/* تخطيط: شريط علوي ثابت بالأقسام الثلاثة، تحته مساحة عمل واحدة: رفع ← تقدم ← جدول مراجعة قابل للتعديل */
+:root {
+  /* ألوان مأخوذة من لوجو قطاع المياه الجوفية: كحلي الحرف، أزرق المية، رملي الأرض، عنابي طبقة التربة */
+  --bg: #f4f6fa; --surface: #ffffff; --ink: #14203d; --muted: #586582; --line: #d6deea;
+  --accent: #24408e; --accent-ink: #ffffff; --accent-soft: #e2ecfa; --water: #3d8fd1; --sand: #efc56a;
+  --warn: #fdf0cc; --warn-ink: #6b4c00; --bad: #8a2a4f; --ok: #2f7d3a;
+  --f-display: "Readex Pro", "IBM Plex Sans Arabic", Tahoma, sans-serif;
+  --f-body: "IBM Plex Sans Arabic", Tahoma, "Segoe UI", sans-serif;
+  --r: 10px;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0d1322; --surface: #151d31; --ink: #e4eaf6; --muted: #9aa7c2; --line: #29344d;
+  --accent: #7fa6f0; --accent-ink: #0b1430; --accent-soft: #1c2a4a; --water: #6fb5ec; --sand: #d9ae55;
+  --warn: #4a3a10; --warn-ink: #ffe3a0; --bad: #e88aaf; --ok: #86d18f; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0d1322; --surface: #151d31; --ink: #e4eaf6; --muted: #9aa7c2; --line: #29344d;
+  --accent: #7fa6f0; --accent-ink: #0b1430; --accent-soft: #1c2a4a; --water: #6fb5ec; --sand: #d9ae55;
+  --warn: #4a3a10; --warn-ink: #ffe3a0; --bad: #e88aaf; --ok: #86d18f; color-scheme: dark }
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.6; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--surface); }
+.wrap { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); max-width: 1500px; margin: 0 auto; }
+header { box-shadow: inset 0 -3px 0 var(--sand); position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--surface); border-bottom: 1px solid var(--line); }
+header .wrap { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 20px; padding-block: 10px; }
+h1 { font-family: var(--f-display); font-size: 1.5rem; margin: 0; letter-spacing: 0; display: flex; align-items: center; gap: 10px; color: var(--accent); }
+h1 img { width: 44px; height: 44px; border-radius: 50%; background: #fff; object-fit: cover; box-shadow: 0 0 0 2px var(--line); }
+footer { border-top: 1px solid var(--line); background: var(--surface); }
+footer .wrap { padding-block: 14px; display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: center; justify-content: space-between; font-size: .88rem; color: var(--muted); }
+footer b { color: var(--ink); font-weight: 600; }
+.phone { font-variant-numeric: tabular-nums; direction: ltr; unicode-bidi: isolate; user-select: all; color: var(--ink); }
+.linkbtn { border: 0; background: none; color: var(--accent); font: inherit; cursor: pointer; padding: 0; text-decoration: underline; }
+.about { display: grid; gap: 16px; max-width: 760px; }
+.about h2 { font-family: var(--f-display); font-weight: 500; font-size: 1.15rem; margin: 0; color: var(--accent); }
+.about ol, .about ul { margin: 0; padding-inline-start: 22px; display: grid; gap: 4px; }
+.about .card p { margin: 0; }
+nav { display: flex; gap: 4px; background: var(--bg); padding: 4px; border-radius: 999px; overflow-x: auto; max-width: 100%; }
+nav button { border: 0; background: transparent; color: var(--muted); font: 500 .95rem var(--f-body); padding: 6px 16px; border-radius: 999px; cursor: pointer; white-space: nowrap; }
+nav button[aria-selected="true"] { background: var(--accent); color: var(--accent-ink); }
+main .wrap { padding-block: 20px 60px; display: grid; gap: 16px; }
+section[role="tabpanel"] { display: grid; gap: 16px; }
+.lead { color: var(--muted); max-width: 70ch; margin: 0; }
+.bar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.drop { border: 2px dashed var(--line); background: var(--surface); border-radius: var(--r); padding: 22px; display: grid; gap: 8px; justify-items: start; }
+.drop.over { border-color: var(--accent); background: var(--accent-soft); }
+.drop strong { font-family: var(--f-display); font-weight: 500; font-size: 1.05rem; }
+.btn { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: 500 .95rem var(--f-body); padding: 8px 16px; border-radius: 8px; cursor: pointer; }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.btn:focus-visible, .linkbtn:focus-visible, nav button:focus-visible, td[contenteditable]:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+input[type="date"], input[type="text"] { font: inherit; padding: 6px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); }
+label.field { display: inline-flex; align-items: center; gap: 8px; font-size: .9rem; color: var(--muted); }
+.progress { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 14px 16px; display: grid; gap: 8px; }
+.meter { height: 8px; background: var(--bg); border-radius: 99px; overflow: hidden; }
+.meter i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .3s; }
+.note { font-size: .88rem; color: var(--muted); }
+.msg { padding: 10px 14px; border-radius: 8px; background: var(--accent-soft); font-size: .92rem; }
+.msg.err { background: var(--warn); color: var(--warn-ink); }
+.stats { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: .9rem; color: var(--muted); }
+.stats b { color: var(--ink); font-variant-numeric: tabular-nums; }
+.legend { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { width: 14px; height: 14px; border-radius: 3px; background: var(--warn); display: inline-block; border: 1px solid var(--line); }
+.tablebox { overflow: auto; max-height: 70vh; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); }
+table { border-collapse: separate; border-spacing: 0; font-size: .86rem; font-variant-numeric: tabular-nums; }
+th, td { border-bottom: 1px solid var(--line); border-inline-start: 1px solid var(--line); padding: 6px 8px; text-align: start; vertical-align: top; }
+th { position: sticky; top: 0; background: var(--surface); font-weight: 600; white-space: nowrap; z-index: 1; font-size: .8rem; color: var(--muted); }
+td { min-width: 60px; }
+td.long { min-width: 260px; }
+td.mid { min-width: 140px; }
+td[contenteditable] { cursor: text; }
+td.empty, td.unsure { background: var(--warn); color: var(--warn-ink); }
+td.tool { white-space: nowrap; min-width: 0; }
+td.tool button { border: 0; background: none; color: var(--accent); font: inherit; cursor: pointer; padding: 0 4px; }
+tr.warnrow td:first-child { box-shadow: inset -3px 0 0 var(--bad); }
+.empty-state { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 22px; display: grid; gap: 10px; }
+.empty-state h3 { font-family: var(--f-display); font-weight: 500; margin: 0; font-size: 1.05rem; }
+.empty-state ol { margin: 0; padding-inline-start: 20px; color: var(--muted); }
+.viewer { position: fixed; inset: 0; z-index: 20; background: rgba(0,0,0,.6); display: grid; place-items: center; padding: calc(16px + env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) calc(16px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
+.viewer .box { background: var(--surface); border-radius: var(--r); max-width: 100%; max-height: 100%; overflow: auto; display: grid; gap: 8px; padding: 10px; }
+.viewer img { max-width: min(1400px, 100%); }
+.cols2 { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 16px; display: grid; gap: 8px; align-content: start; min-width: 0; }
+.card h3 { margin: 0; font-family: var(--f-display); font-weight: 500; font-size: 1rem; }
+.files { font-size: .85rem; color: var(--muted); margin: 0; padding-inline-start: 18px; }
+.pill { display: inline-block; padding: 1px 10px; border-radius: 99px; font-size: .8rem; background: var(--bg); white-space: nowrap; }
+.pill.ok { color: var(--ok); } .pill.part { color: var(--warn-ink); background: var(--warn); } .pill.none { color: var(--muted); } .pill.orphan { color: var(--bad); }
+@media (prefers-reduced-motion: reduce) { .meter i { transition: none; } }
+</style>
+
+</head>
+<body>
+<header><div class="wrap">
+  <h1><img src="data:image/jpeg;base64,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" alt="شعار قطاع المياه الجوفية">رصد</h1>
+  <nav role="tablist">
+    <button role="tab" id="t-min" aria-selected="true" aria-controls="p-min">محاضر لجان</button>
+    <button role="tab" id="t-clm" aria-selected="false" aria-controls="p-clm">مطالبات</button>
+    <button role="tab" id="t-db" aria-selected="false" aria-controls="p-db">قاعدة بيانات</button>
+    <button role="tab" id="t-about" aria-selected="false" aria-controls="p-about">عن التطبيق</button>
+  </nav>
+</div></header>
+
+<main><div class="wrap">
+  <div id="libmsg" class="msg err" hidden></div>
+
+  <!-- محاضر لجان -->
+  <section role="tabpanel" id="p-min" aria-labelledby="t-min">
+    <p class="lead">ارفع ملف المحاضر (PDF أو صور). كل صف في الجدول يتقري خانة خانة، وبعدها تراجع وتعدّل وتنزّل Excel.</p>
+    <div class="bar">
+      <label class="field" for="cdate">تاريخ اللجنة (المكتوب فوق في المحضر) <input type="date" id="cdate"></label>
+      <button class="btn" id="apply-min">تطبيق على كل الصفوف</button>
+    </div>
+    <div class="drop" data-kind="min">
+      <strong>اسحب ملف المحاضر هنا أو اختاره</strong>
+      <span class="note">PDF أو صور JPG/PNG. الأرقام الإنجليزي بتتقري أدق بكتير من العربي.</span>
+      <div class="bar">
+        <input type="file" id="f-min" accept="application/pdf,image/*" multiple hidden>
+        <button class="btn primary" data-pick="f-min">اختيار ملف</button>
+      </div>
+    </div>
+    <div class="progress" id="pr-min" hidden><div class="bar" style="justify-content:space-between"><span id="pr-min-t">جاري التحضير…</span><button class="btn" id="stop-min">إيقاف</button></div><div class="meter"><i id="pr-min-m"></i></div></div>
+    <div id="out-min"></div>
+  </section>
+
+  <!-- مطالبات -->
+  <section role="tabpanel" id="p-clm" aria-labelledby="t-clm" hidden>
+    <p class="lead">ارفع صور أو PDF المطالبات (ترخيص أو استهلاك، كل صفحة مطالبة). الإجمالي بيتقري من المبلغ المكتوب بالحروف. الخانات المكتوبة بخط اليد (م وتاريخ الاعتماد) بتكتبها إنت.</p>
+    <div class="bar">
+      <label class="field" for="appr">تاريخ الاعتماد للدفعة كلها <input type="date" id="appr"></label>
+      <label class="field" for="mstart">أول رقم م (اختياري) <input type="text" id="mstart" inputmode="numeric" size="7" placeholder="3209"></label>
+      <button class="btn" id="apply-clm">تطبيق على كل الصفوف</button>
+    </div>
+    <div class="drop" data-kind="clm">
+      <strong>اسحب المطالبات هنا أو اختارها</strong>
+      <span class="note">صوّر المطالبة من فوق ومستقيمة، من غير ميل وفي إضاءة كويسة.</span>
+      <div class="bar">
+        <input type="file" id="f-clm" accept="application/pdf,image/*" multiple hidden>
+        <button class="btn primary" data-pick="f-clm">اختيار ملفات</button>
+      </div>
+    </div>
+    <div class="progress" id="pr-clm" hidden><div class="bar" style="justify-content:space-between"><span id="pr-clm-t">جاري التحضير…</span><button class="btn" id="stop-clm">إيقاف</button></div><div class="meter"><i id="pr-clm-m"></i></div></div>
+    <div id="out-clm"></div>
+  </section>
+
+  <!-- قاعدة بيانات -->
+  <section role="tabpanel" id="p-db" aria-labelledby="t-db" hidden>
+    <p class="lead">بتربط كل طلب في المحاضر بالمطالبات بتاعته عن طريق رقم الملف (799-2026 في المحضر = رقم المنظومة 799 في المطالبة). بتستخدم اللي قريته في القسمين التانيين، وتقدر تضيف ملفات Excel قديمة.</p>
+    <div class="cols2">
+      <div class="card">
+        <h3>المحاضر</h3>
+        <span class="note">Excel المحاضر اللي نزّلته من القسم الأول.</span>
+        <input type="file" id="x-min" accept=".xlsx,.xls" multiple hidden>
+        <div class="bar"><button class="btn" data-pick="x-min">إضافة Excel محاضر</button></div>
+        <ul class="files" id="xl-min"></ul>
+      </div>
+      <div class="card">
+        <h3>المطالبات</h3>
+        <span class="note">شيت المطالبات بتاعك (الكبير) أو Excel نزّلته من قسم المطالبات.</span>
+        <input type="file" id="x-clm" accept=".xlsx,.xls" multiple hidden>
+        <div class="bar"><button class="btn" data-pick="x-clm">إضافة Excel مطالبات</button></div>
+        <ul class="files" id="xl-clm"></ul>
+      </div>
+    </div>
+    <div class="bar"><button class="btn primary" id="build-db">اربط البيانات</button></div>
+    <div id="out-db"></div>
+  </section>
+  <!-- عن التطبيق -->
+  <section role="tabpanel" id="p-about" aria-labelledby="t-about" hidden>
+    <div class="about">
+      <div class="card">
+        <h2>رصد</h2>
+        <p>بيقرا محاضر لجان التراخيص والمطالبات المالية (ترخيص واستهلاك) من ملفات PDF أو الصور، ويحوّلها لجداول Excel بالأعمدة المعتمدة، ويربط كل طلب بالمطالبات بتاعته برقم الملف.</p>
+        <p class="note">القراءة بتتم على جهازك نفسه، مجاناً ومن غير ما الملفات تتبعت لأي مكان.</p>
+      </div>
+      <div class="card">
+        <h2>طريقة الاستخدام</h2>
+        <ol>
+          <li><b>محاضر لجان:</b> اختار تاريخ اللجنة، ارفع ملف المحاضر، راجع الخانات الصفرا، ونزّل Excel.</li>
+          <li><b>مطالبات:</b> اكتب تاريخ الاعتماد وأول رقم م، ارفع صور أو PDF المطالبات، راجع، ونزّل Excel بنفس ترتيب شيت المطالبات.</li>
+          <li><b>قاعدة بيانات:</b> بتستخدم اللي اتقرا في القسمين، وتقدر تضيف ملفات Excel قديمة، ودوس "اربط البيانات".</li>
+        </ol>
+      </div>
+      <div class="card">
+        <h2>نصايح لقراءة أدق</h2>
+        <ul>
+          <li>الأرقام الإنجليزي (236.83) بتتقري أدق بكتير من العربي (٢٣٦,٨٣).</li>
+          <li>صوّر المطالبة من فوق ومستقيمة، في إضاءة كويسة ومن غير ظل.</li>
+          <li>نزّل Excel المحاضر واحتفظ بيه، عشان تقدر تربطه بالمطالبات بعدين من أي جهاز.</li>
+          <li>الخانات المكتوبة بخط اليد (م، تاريخ الاعتماد، تاريخ اللجنة) بتتكتب يدوي.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h2>عن الإصدار</h2>
+        <p>الإصدار 1.0، أكتوبر 2026</p>
+      </div>
+    </div>
+  </section>
+</div></main>
+
+<footer><div class="wrap">
+  <span>تطوير: <b>م/ محمد فخري محمد</b></span>
+  <span>للتواصل: <span class="phone">01142245558</span> <button class="linkbtn" data-copy="01142245558">نسخ</button></span>
+</div></footer>
+
+<div class="viewer" id="viewer" hidden><div class="box"><div class="bar" style="justify-content:space-between"><span id="viewer-t"></span><button class="btn" id="viewer-x">إغلاق</button></div><img id="viewer-img" alt="صورة الصفحة الأصلية"></div></div>
+
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"></script>
+<script>
+/* محرك قراءة الجداول: يكتشف خانات الجدول ويقرأ كل خانة لوحدها */
+(function (root) {
+  'use strict';
+
+  // ---------- أدوات الصورة ----------
+  function binarize(g, w, h) {
+    // عتبة محلية باستخدام صورة تكاملية
+    const r = Math.max(10, Math.round(Math.min(w, h) / 80));
+    const ii = new Float64Array((w + 1) * (h + 1));
+    for (let y = 0; y < h; y++) {
+      let s = 0;
+      for (let x = 0; x < w; x++) {
+        s += g[y * w + x];
+        ii[(y + 1) * (w + 1) + x + 1] = ii[y * (w + 1) + x + 1] + s;
+      }
+    }
+    const b = new Uint8Array(w * h);
+    for (let y = 0; y < h; y++) {
+      const y0 = Math.max(0, y - r), y1 = Math.min(h, y + r + 1);
+      for (let x = 0; x < w; x++) {
+        const x0 = Math.max(0, x - r), x1 = Math.min(w, x + r + 1);
+        const sum = ii[y1 * (w + 1) + x1] - ii[y0 * (w + 1) + x1] - ii[y1 * (w + 1) + x0] + ii[y0 * (w + 1) + x0];
+        const mean = sum / ((y1 - y0) * (x1 - x0));
+        const v = g[y * w + x];
+        b[y * w + x] = (v < mean - 12 && v < 200) ? 1 : 0;
+      }
+    }
+    return b;
+  }
+
+  function lineMask(b, w, h) {
+    const H = new Uint8Array(w * h), V = new Uint8Array(w * h);
+    const minH = Math.max(60, Math.round(w * 0.04)), minV = Math.max(30, Math.round(h / 55)), minShort = Math.max(30, Math.round(w * 0.01));
+    const D = 1;
+    for (let x = 0; x < w; x++) {
+      let start = -1, last = -1;
+      for (let y = 0; y <= h; y++) {
+        let on = 0;
+        if (y < h) for (let d = -D; d <= D && !on; d++) { const xx = x + d; if (xx >= 0 && xx < w && b[y * w + xx]) on = 1; }
+        if (on) { if (start < 0) start = y; last = y; }
+        else if (start >= 0 && y - last > 3) {
+          if (last - start + 1 >= minV) for (let k = start; k <= last; k++) V[k * w + x] = 1;
+          start = -1;
+        }
+      }
+      if (start >= 0 && last - start + 1 >= minV) for (let k = start; k <= last; k++) V[k * w + x] = 1;
+    }
+    // خط رأسي قريب من نقطة؟ (لقبول الخطوط الأفقية القصيرة بين خطين رأسيين)
+    const nearV = (x, y) => {
+      for (let dx = -10; dx <= 10; dx++) for (let dy = -5; dy <= 5; dy++) {
+        const xx = x + dx, yy = y + dy;
+        if (xx >= 0 && xx < w && yy >= 0 && yy < h && V[yy * w + xx]) return true;
+      }
+      return false;
+    };
+    for (let y = 0; y < h; y++) {
+      let start = -1, last = -1;
+      const flush = () => {
+        const len = last - start + 1;
+        if (len >= minH || (len >= minShort && nearV(start, y) && nearV(last, y))) for (let k = start; k <= last; k++) H[y * w + k] = 1;
+      };
+      for (let x = 0; x <= w; x++) {
+        let on = 0;
+        if (x < w) for (let d = -D; d <= D && !on; d++) { const yy = y + d; if (yy >= 0 && yy < h && b[yy * w + x]) on = 1; }
+        if (on) { if (start < 0) start = x; last = x; }
+        else if (start >= 0 && x - last > 3) { flush(); start = -1; }
+      }
+      if (start >= 0) flush();
+    }
+    const out = new Uint8Array(w * h);
+    for (let y = 1; y < h - 1; y++) for (let x = 1; x < w - 1; x++) {
+      const i = y * w + x;
+      if (H[i] || V[i] || H[i - 1] || H[i + 1] || V[i - w] || V[i + w] || H[i - w] || H[i + w] || V[i - 1] || V[i + 1]) out[i] = 1;
+    }
+    return out;
+  }
+
+  function findCells(grid, w, h) {
+    const lab = new Int32Array(w * h).fill(-1);
+    const boxes = [];
+    const stack = new Int32Array(w * h);
+    for (let s = 0; s < w * h; s++) {
+      if (grid[s] || lab[s] >= 0) continue;
+      let sp = 0; stack[sp++] = s; lab[s] = boxes.length;
+      let x0 = w, y0 = h, x1 = 0, y1 = 0, n = 0, edge = false;
+      while (sp) {
+        const p = stack[--sp]; const x = p % w, y = (p / w) | 0; n++;
+        if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
+        if (x === 0 || y === 0 || x === w - 1 || y === h - 1) edge = true;
+        const nb = [p - 1, p + 1, p - w, p + w];
+        for (const q of nb) {
+          if (q < 0 || q >= w * h) continue;
+          if ((q === p - 1 && x === 0) || (q === p + 1 && x === w - 1)) continue;
+          if (!grid[q] && lab[q] < 0) { lab[q] = boxes.length; stack[sp++] = q; }
+        }
+      }
+      boxes.push({ x: x0, y: y0, w: x1 - x0 + 1, h: y1 - y0 + 1, n, edge });
+    }
+    return boxes.filter(b => !b.edge && b.w >= 18 && b.h >= 18 && b.w < w * 0.6 && b.h < h * 0.5 && b.n > 0.55 * b.w * b.h);
+  }
+
+  function crop(g, w, h, b, pad) {
+    pad = pad == null ? 6 : pad;
+    const x0 = Math.max(0, b.x + pad), y0 = Math.max(0, b.y + pad);
+    const cw = Math.max(1, Math.min(w, b.x + b.w - pad) - x0), ch = Math.max(1, Math.min(h, b.y + b.h - pad) - y0);
+    const out = new Uint8Array(cw * ch);
+    for (let y = 0; y < ch; y++) for (let x = 0; x < cw; x++) out[y * cw + x] = g[(y0 + y) * w + x0 + x];
+    return { data: out, w: cw, h: ch };
+  }
+  function rotate(c, dir) { // dir=1 مع عقارب الساعة
+    const out = new Uint8Array(c.w * c.h), W = c.h, H = c.w;
+    for (let y = 0; y < c.h; y++) for (let x = 0; x < c.w; x++) {
+      const nx = dir === 1 ? c.h - 1 - y : y, ny = dir === 1 ? x : c.w - 1 - x;
+      out[ny * W + nx] = c.data[y * c.w + x];
+    }
+    return { data: out, w: W, h: H };
+  }
+  function prep(c) {
+    const S = c.h < 140 ? 2 : 1, B = 16;
+    const W = c.w * S + 2 * B, H = c.h * S + 2 * B, out = new Uint8Array(W * H).fill(255);
+    for (let y = 0; y < c.h * S; y++) for (let x = 0; x < c.w * S; x++) {
+      const fx = x / S, fy = y / S, x0 = Math.min(c.w - 1, fx | 0), y0 = Math.min(c.h - 1, fy | 0);
+      const x1 = Math.min(c.w - 1, x0 + 1), y1 = Math.min(c.h - 1, y0 + 1), ax = fx - x0, ay = fy - y0;
+      const v = (c.data[y0 * c.w + x0] * (1 - ax) + c.data[y0 * c.w + x1] * ax) * (1 - ay) + (c.data[y1 * c.w + x0] * (1 - ax) + c.data[y1 * c.w + x1] * ax) * ay;
+      out[(y + B) * W + x + B] = v;
+    }
+    return { data: out, w: W, h: H };
+  }
+  function inkRatio(c) { let n = 0; for (let i = 0; i < c.data.length; i++) if (c.data[i] < 110) n++; return n / c.data.length; }
+
+  // ---------- تنظيف النصوص ----------
+  const AR = '٠١٢٣٤٥٦٧٨٩', FA = '۰۱۲۳۴۵۶۷۸۹';
+  function digits(s) {
+    return (s || '').replace(/[٠-٩]/g, d => AR.indexOf(d)).replace(/[۰-۹]/g, d => FA.indexOf(d));
+  }
+  function clean(s) {
+    return (s || '').replace(/[‎‏‪-‮]/g, '').replace(/[|\[\]{}_~"“”'`«»]/g, ' ').replace(/\s+/g, ' ').trim();
+  }
+  function num(s) {
+    let t = digits(clean(s)).replace(/٫/g, '.').replace(/(\d)\s*[,،]\s*(\d)/g, '$1.$2');
+    const m = t.match(/\d+(?:\.\d+)?/);
+    return m ? m[0] : '';
+  }
+  function numVal(s) { const n = num(s); return n === '' ? '' : Number(n); }
+
+  // ---------- الجدول ----------
+  function cluster(vals, tol) {
+    vals = vals.slice().sort((a, b) => a - b);
+    const out = [];
+    for (const v of vals) {
+      const last = out[out.length - 1];
+      if (last && v - last.v <= tol) { last.s += v; last.n++; last.v = v; last.c = last.s / last.n; }
+      else out.push({ v, s: v, n: 1, c: v });
+    }
+    return out.map(o => o.c);
+  }
+
+  function tableOf(cells) {
+    // أكبر مجموعة خانات متلاصقة = الجدول الرئيسي
+    if (!cells.length) return [];
+    const med = cells.map(c => c.h).sort((a, b) => a - b)[cells.length >> 1];
+    const near = (a, b) => !(a.x > b.x + b.w + 12 || b.x > a.x + a.w + 12 || a.y > b.y + b.h + 12 || b.y > a.y + a.h + 12);
+    const grp = cells.map((_, i) => i);
+    const find = i => grp[i] === i ? i : (grp[i] = find(grp[i]));
+    for (let i = 0; i < cells.length; i++) for (let j = i + 1; j < cells.length; j++) if (near(cells[i], cells[j])) grp[find(i)] = find(j);
+    const m = {};
+    cells.forEach((c, i) => { const r = find(i); (m[r] = m[r] || []).push(c); });
+    return Object.values(m).sort((a, b) => b.length - a.length)[0];
+  }
+
+  // ---------- محاضر اللجان ----------
+  const MIN_COLS = ['م', 'الاسم', 'رقم الملف', 'المحافظة', 'المنطقة', 'س', 'ط', 'ف', 'عدد الآبار',
+    'E_s', 'E_m', 'E_d', 'N_s', 'N_m', 'N_d', 'العمق', 'القطر', 'نوع الخزان', 'كمية المياه',
+    'المنسوب', 'الملوحة', 'الغرض', 'نوع الزراعات', 'ملاحظات', 'اسم البئر'];
+
+  function parseTitle(t) {
+    t = clean(digits(t));
+    const notes = [];
+    if (/ضاف/.test(t)) notes.push('إضافة مساحة بالتراضي لبئر مرخص');
+    if (/مزدوج/.test(t)) notes.push('استخدام مزدوج');
+    const ap = t.match(/الموافق\S*.*?(20\d\d\s*\/\s*\d{1,2}\s*\/\s*\d{1,2}|\d{1,2}\s*\/\s*\d{1,2}\s*\/\s*20\d\d)/);
+    if (ap) notes.push('تمت الموافقة على حفرها بلجنة ' + ap[1].replace(/\s/g, ''));
+    else if (/الموافق/.test(t)) notes.push('تمت الموافقة على حفرها');
+    if (/مراقب/.test(t)) notes.push('لمراقبة مناسيب المياه');
+    return {
+      'الموقف من الترخيص': /بحفر|حفر آبار|حفر ابار/.test(t) ? 'جاري ترخيصه مقترح' : 'جاري ترخيصه قائم',
+      'نوع الري': /تكميل/.test(t) ? 'تكميلي' : 'جوفي',
+      'ملاحظات الطلب': notes.join(' - '),
+      _monitor: /مراقب/.test(t)
+    };
+  }
+
+  async function parseMinutes(img, ocr, onStep) {
+    const { data: g, w, h } = img;
+    const b = binarize(g, w, h);
+    const grid = lineMask(b, w, h);
+    const table = tableOf(findCells(grid, w, h));
+    if (!table || table.length < 15) return { rows: [], error: 'مالقيتش جدول واضح في الصفحة' };
+    const tx0 = Math.min(...table.map(c => c.x)), tx1 = Math.max(...table.map(c => c.x + c.w));
+    const ty0 = Math.min(...table.map(c => c.y));
+    // حد الرأس: الخانة اللي في أقصى اليمين وأعلى الجدول
+    const rightTop = table.filter(c => c.x + c.w > tx1 - 40).sort((a, b) => a.y - b.y)[0];
+    const headBottom = rightTop.y + rightTop.h;
+    const data = table.filter(c => c.y >= headBottom - 6);
+    // حدود الأعمدة
+    const xs = cluster(table.flatMap(c => [c.x, c.x + c.w]), 14);
+    const cols = [];
+    for (let i = xs.length - 1; i > 0; i--) if (xs[i] - xs[i - 1] > 12) cols.push([xs[i - 1], xs[i]]); // من اليمين
+    const hs = data.map(c => c.h).sort((a, b2) => a - b2);
+    const rowTol = Math.max(14, Math.round((hs[Math.floor(hs.length * 0.2)] || 50) * 0.35));
+    const rowTops = cluster(data.map(c => c.y), rowTol);
+    const nRows = rowTops.length;
+    const nCols = cols.length;
+    const grid2 = Array.from({ length: nRows }, () => Array(nCols).fill(null));
+    for (const c of data) {
+      const ci = cols.findIndex(([a, b2]) => Math.min(b2, c.x + c.w) - Math.max(a, c.x) > (b2 - a) * 0.5);
+      if (ci < 0) continue;
+      for (let r = 0; r < nRows; r++) if (rowTops[r] >= c.y - 10 && rowTops[r] < c.y + c.h - 10) grid2[r][ci] = grid2[r][ci] || c;
+    }
+    // عنوان الصفحة
+    const title = await ocr(crop(g, w, h, { x: tx0, y: Math.max(0, ty0 - Math.round(h * 0.07)), w: tx1 - tx0, h: Math.round(h * 0.065) }, 0), 'text');
+    const seen = new Map();
+    const read = async (c, kind) => {
+      if (!c) return '';
+      if (seen.has(c)) return seen.get(c);
+      let cr = crop(g, w, h, c);
+      let t = '';
+      if (inkRatio(cr) > 0.004) {
+        t = clean(await ocr(prep(cr), kind)); if (!t) t = clean(await ocr(prep(cr), 'line'));
+        if (kind === 'text' && c.h > c.w * 1.6 && (t.match(/[\u0621-\u064A]/g) || []).length < 3) {
+          const score = s => (s.match(/[\u0621-\u064A]/g) || []).length - 2 * (s.match(/[A-Za-z0-9]/g) || []).length;
+          for (const d of [1, -1]) { const t2 = clean(await ocr(prep(rotate(cr, d)), 'text')); if (score(t2) > score(t)) t = t2; }
+        }
+      }
+      seen.set(c, t);
+      return t;
+    };
+    const rows = [];
+    const extra = nCols - 24; // 1 لو فيه عمود اسم البئر
+    for (let r = 0; r < nRows; r++) {
+      onStep && onStep(r, nRows);
+      const R = {}; const at = i => grid2[r][i];
+      const map = {};
+      MIN_COLS.forEach((k, i) => { map[k] = i; });
+      for (const k of MIN_COLS) {
+        let i = map[k];
+        if (k === 'اسم البئر') { if (extra < 1) { R[k] = ''; continue; } }
+        if (i >= nCols) { R[k] = ''; continue; }
+        const kind = k === 'اسم البئر' ? 'line' : ['الاسم', 'المحافظة', 'المنطقة', 'نوع الخزان', 'الغرض', 'نوع الزراعات', 'ملاحظات'].includes(k) ? 'text' : 'num';
+        if (k === 'رقم الملف') { R[k] = await readFileNo(at(i)); continue; }
+        R[k] = await read(at(i), kind);
+      }
+      if (!Object.values(R).some(v => v)) continue;
+      R._well = data.indexOf(at(9)); R._raw = Object.assign({}, R); rows.push(R);
+    }
+    async function readFileNo(c) {
+      if (!c) return '';
+      if (seen.has(c)) return seen.get(c);
+      const base = crop(g, w, h, c);
+      let best = '';
+      for (const v of [base, rotate(base, 1), rotate(base, -1)].map(prep)) {
+        const t = digits(clean(await ocr(v, 'num')));
+        const m = t.match(/(\d{3,4})\s*[-–]\s*(20\d\d)|(20\d\d)\s*[-–]\s*(\d{3,4})/);
+        if (m) { best = m[1] ? m[1] + '-' + m[2] : m[4] + '-' + m[3]; break; }
+        if (!best) { const n = t.match(/\d{3,4}/); if (n) best = n[0]; }
+      }
+      seen.set(c, best);
+      return best;
+    }
+    return { rows: finishMinutes(rows, parseTitle(title), nCols), cols: nCols };
+  }
+
+  function normPurpose(p, monitor) {
+    p = clean(p);
+    const z = /زراع/.test(p), s = /صناع|داجن|دواجن/.test(p), m = /مراقب|رقاب/.test(p);
+    if (m || (!p && monitor)) return 'مراقبة';
+    if (z && s) return 'زراعي + صناعي';
+    if (s) return 'صناعي';
+    if (z) return 'زراعي';
+    return p;
+  }
+  function finishMinutes(rows, T, nCols) {
+    const wellIds = [...new Set(rows.map(r => r._well))];
+    const wells = wellIds.length;
+    return rows.map((R, i) => {
+      const note = digits(R['ملاحظات'] || '');
+      const sn = (note.match(/S\s*N\s*[:：.]?\s*([A-Z0-9][A-Z0-9-]{4,})/i) || [])[1] || '';
+      let reading = '';
+      if (sn) { const m = note.replace(sn, '').match(/(\d+(?:[.,]\d+)?)\s*(?:م|m)/); if (m) reading = m[1].replace(',', '.'); }
+      const codeSrc = clean(R['اسم البئر'] || '') || ((note.match(/\b([A-Za-z]{1,3}\s?[-.]?\s?\d{1,4}(?:[-.]\d)?)\b/) || [])[1] || '');
+      const code = sn ? (clean(R['اسم البئر'] || '')) : codeSrc;
+      let name = clean(R['الاسم']);
+      if (code && /[A-Za-z]/.test(code)) name += ' - ' + code.replace(/\s/g, '');
+      else if (wells > 1) name += ' - بئر ' + (wellIds.indexOf(R._well) + 1);
+      return {
+        'الموقف من الترخيص': T['الموقف من الترخيص'], 'نوع الري': T['نوع الري'], 'ملاحظات الطلب': T['ملاحظات الطلب'],
+        'الاسم': name, 'رقم الملف': R['رقم الملف'],
+        'المحافظة': clean(R['المحافظة']), 'المنطقة': clean(R['المنطقة']),
+        'المساحة (س)': numVal(R['س']), 'المساحة (ط)': numVal(R['ط']), 'المساحة (ف)': numVal(R['ف']) || clean(R['ف']),
+        'عدد الآبار': numVal(R['عدد الآبار']),
+        'E درجة': numVal(R['E_d']), 'E دقيقة': numVal(R['E_m']), 'E ثانية': numVal(R['E_s']),
+        'N درجة': numVal(R['N_d']), 'N دقيقة': numVal(R['N_m']), 'N ثانية': numVal(R['N_s']),
+        'العمق': numVal(R['العمق']), 'القطر': clean(digits(R['القطر'])),
+        'نوع الخزان': clean(R['نوع الخزان']), 'كمية المياه م3/يوم': numVal(R['كمية المياه']),
+        'المنسوب الاستاتيكي': numVal(R['المنسوب']), 'الملوحة': numVal(R['الملوحة']),
+        'استخدام البئر': normPurpose(R['الغرض'], T._monitor) === 'مراقبة' ? 'رقابي' : 'إنتاجي',
+        'الغرض': normPurpose(R['الغرض'], T._monitor), 'نوع الزراعات': clean(R['نوع الزراعات']),
+        'سيريال العداد': sn, 'قراءة العداد (م3)': reading === '' ? '' : Number(reading),
+        _raw: R._raw, _warn: nCols < 24 || nCols > 25 ? 'عدد الأعمدة غير متوقع (' + nCols + ')' : (normPurpose(R['الغرض'], T._monitor) === 'زراعي + صناعي' ? 'الغرض مزدوج في خانة واحدة، قسّمه صفين' : '')
+      };
+    });
+  }
+
+  // ---------- المطالبات ----------
+  // تحويل المبلغ المكتوب بالحروف (فقط وقدره ...) إلى رقم
+  function normAr(t) { return t.replace(/[أإآ]/g, 'ا').replace(/ة/g, 'ه').replace(/ى/g, 'ي').replace(/ـ/g, ''); }
+  const ONES = { 'واحد': 1, 'واحده': 1, 'احد': 1, 'احدي': 1, 'اثنين': 2, 'اثنان': 2, 'اثنتين': 2, 'اثنا': 2, 'اثني': 2, 'ثلاثه': 3, 'ثلاث': 3, 'اربعه': 4, 'اربع': 4,
+    'خمسه': 5, 'خمس': 5, 'سته': 6, 'ست': 6, 'سبعه': 7, 'سبع': 7, 'ثمانيه': 8, 'ثماني': 8, 'ثمان': 8, 'تسعه': 9, 'تسع': 9, 'عشره': 10,
+    'عشرون': 20, 'عشرين': 20, 'ثلاثون': 30, 'ثلاثين': 30, 'اربعون': 40, 'اربعين': 40, 'خمسون': 50, 'خمسين': 50, 'ستون': 60, 'ستين': 60,
+    'سبعون': 70, 'سبعين': 70, 'ثمانون': 80, 'ثمانين': 80, 'تسعون': 90, 'تسعين': 90 };
+  const HUND = { 'مانه': 100, 'مائه': 100, 'مئه': 100, 'ميه': 100, 'مايه': 100, 'مائتان': 200, 'مائتين': 200, 'مئتان': 200, 'مئتين': 200, 'ميتين': 200, 'مايتين': 200 };
+  function hundredWord(t) {
+    if (HUND[t]) return HUND[t];
+    const m = t.match(/^(ثلاث|اربع|خمس|ست|سبع|ثمان|ثماني|تسع)(مائه|مئه|ميه|مايه|مانه)$/);
+    return m ? ONES[m[1]] * 100 : 0;
+  }
+  function wordsToNum(seg) {
+    let total = 0, cur = 0, any = false, lastOne = false;
+    for (let t of normAr(seg).split(/\s+/)) {
+      if (!t) continue;
+      if (t.length > 2 && t[0] === 'و' && !ONES[t] && !hundredWord(t)) t = t.slice(1);
+      if (t === 'عشر') { if (lastOne) cur += 10; lastOne = false; any = true; continue; }
+      if (ONES[t] != null) { cur += ONES[t]; lastOne = ONES[t] < 10; any = true; continue; }
+      lastOne = false;
+      const hv = hundredWord(t);
+      if (hv) { if (hv === 100 && cur > 0 && cur < 10) cur *= 100; else cur += hv; any = true; continue; }
+      if (/^(الف|الاف|الفا|ا لاف)$/.test(t)) { total += (cur || 1) * 1000; cur = 0; any = true; continue; }
+      if (/^(الفان|الفين)$/.test(t)) { total += 2000; cur = 0; any = true; continue; }
+      if (/^(مليون|ملايين)$/.test(t)) { total += (cur || 1) * 1e6; cur = 0; any = true; continue; }
+    }
+    return any ? total + cur : null;
+  }
+  function amountFromWords(text) {
+    const l = normAr(text).replace(/\n/g, ' ');
+    const m = l.match(/(?:فقط|وقدره)(.*?)(?:لا غير|$)/);
+    if (!m) return null;
+    const body = m[1].replace(/وقدره|فقط/g, ' ');
+    const parts = body.split(/جنيه(?:ا|ات)?|جنيها/);
+    const lE = wordsToNum(parts[0] || '');
+    if (lE == null) return null;
+    let pi = 0;
+    if (parts[1]) { const q = (parts[1].split(/قرش|قروش/)[0]); pi = wordsToNum(q) || 0; }
+    return Math.round((lE + pi / 100) * 100) / 100;
+  }
+
+  async function parseClaim(img, ocr, onStep) {
+    const { data: g, w, h } = img;
+    onStep && onStep(0, 3);
+    const full = digits(await ocr({ data: g, w, h }, 'page'));
+    const lines = full.split('\n').map(clean).filter(Boolean);
+    const b = binarize(g, w, h);
+    const grid = lineMask(b, w, h);
+    const cells = findCells(grid, w, h);
+    onStep && onStep(1, 3);
+    const texts = [];
+    for (const c of cells) {
+      if (c.w > w * 0.45) { texts.push({ c, t: '' }); continue; }
+      const cr = crop(g, w, h, c);
+      const t = inkRatio(cr) > 0.004 ? digits(clean(await ocr(prep(cr), 'text'))) : '';
+      texts.push({ c, t });
+    }
+    if (typeof process !== 'undefined' && process.env && process.env.DBG) texts.forEach(o => console.error(o.c.x, o.c.y, o.c.w, o.c.h, JSON.stringify(o.t)));
+    onStep && onStep(2, 3);
+    const type = /استهلاك|بدون ترخيص|اللائحه|اللائحة/.test(full) ? 'استهلاك' : 'ترخيص';
+    const lineWith = re => lines.find(l => re.test(l)) || '';
+    const DRE = /(20\d\d)\s*[\/\-.]\s*(\d{1,2})\s*[\/\-.]\s*(\d{1,2})|(20\d\d)[1l|]([01]\d)[1l|]([0-3]\d)(?!\d)/g;
+    const fmtD = m => { const y = m[1] || m[4], mo = m[2] || m[5], d = m[3] || m[6]; return (+mo >= 1 && +mo <= 12 && +d >= 1 && +d <= 31) ? `${y}-${mo.padStart(2, '0')}-${d.padStart(2, '0')}` : ''; };
+    const dateIn = s => { DRE.lastIndex = 0; const m = DRE.exec(digits(s)); return m ? fmtD(m) : ''; };
+    const allDates = [...full.matchAll(DRE)].map(fmtD).filter(Boolean);
+    const sysNo = (full.match(/نظوم\S*\D{0,15}?(\d{2,5})/) || full.match(/(\d{2,5})\D{0,15}نظوم/) || [])[1] || '';
+    const nameLine = lineWith(/المخالف|صاحب الش|صاب الش/);
+    let name = '';
+    const nm = nameLine.match(/((?:شركة|شركه|محافظة|محافظه|جمعية|جامعة)\s.+)$/);
+    if (nm) name = nm[1]; else name = nameLine.replace(/.*?(المخالف|الشأن|الشان)\s*[:.\/]*\s*/, '');
+    name = name.replace(/[|!]+/g, ' ').replace(/(\s\d{1,2})+\s*$/, '').replace(/(^|\s)[a-zA-Z.]{1,4}(?=\s|$)/g, ' ').replace(/\s+/g, ' ').trim();
+    const govs = ['المنيا', 'أسيوط', 'اسيوط', 'بني سويف', 'سوهاج', 'الفيوم', 'الجيزة', 'قنا', 'الوادي الجديد'];
+    const govLine = lines.filter(l => /محافظ|مركز|الناحي/.test(l) && !/المخالف|الشأن|الشان/.test(l)).join(' ');
+    let gov = govs.find(x => govLine.includes(x)) || '';
+    if (!gov) { if (/منفلوط|منقلوط|متفلوط|القوصي|القوصيه|ديروط|اسيوط/.test(full)) gov = 'أسيوط'; else if (/المنيا|سمالوط|مزار|ملوي|مطاي/.test(full)) gov = 'المنيا'; }
+    if (gov === 'اسيوط') gov = 'أسيوط';
+    // الإجمالي: من المبلغ المكتوب بالحروف، ولو مش موجود أكبر مبلغ بعلامة عشرية
+    const amounts = texts.map(o => o.t.replace(/\s/g, '').match(/^(\d{1,7}\.\d{2})$/)).filter(Boolean).map(m => Number(m[1]));
+    const fromWords = amountFromWords(full);
+    let total = fromWords != null ? fromWords : (amounts.length ? Math.max(...amounts) : '');
+    const sure = fromWords != null && amounts.includes(fromWords);
+    // المساحة: أرقام عشرية في الجدول العلوي (يمين الصفحة)
+    const tableTop = texts.filter(o => /بيان|المبلغ|طريقه|طريقة/.test(o.t)).map(o => o.c.y).sort((a, b2) => a - b2)[0] || h;
+    const topNums = texts.filter(o => o.c.y < tableTop && /^\d{1,5}(\.\d{1,3})?$/.test(o.t.replace(/\s/g, '')))
+      .map(o => ({ v: Number(o.t.replace(/\s/g, '')), x: o.c.x + o.c.w / 2, y: o.c.y }));
+    const topCells = texts.filter(o => o.c.y < tableTop && o.c.y > h * 0.2);
+    const tx0 = topCells.length ? Math.min(...topCells.map(o => o.c.x)) : 0, tx1 = topCells.length ? Math.max(...topCells.map(o => o.c.x + o.c.w)) : w;
+    const areaCands = topNums.filter(o => o.x > tx0 + (tx1 - tx0) * 0.55 && o.x < tx0 + (tx1 - tx0) * 0.92 && String(o.v).includes('.') || (o.x > tx0 + (tx1 - tx0) * 0.6 && o.x < tx0 + (tx1 - tx0) * 0.85 && o.v > 0 && o.v < 100000 && o.v !== 0))
+      .sort((a, b2) => a.y - b2.y);
+    const water = topNums.filter(o => o.x < tx0 + (tx1 - tx0) * 0.15).sort((a, b2) => a.y - b2.y)[0];
+    const R = {
+      'م': '', 'رقم المنظومة': sysNo ? Number(sysNo) : '', 'الاسم': name, 'المحافظة': gov,
+      'المساحة الكلية': areaCands[0] ? areaCands[0].v : '', 'نوع المطالبة': type,
+      'قيمة مطالبة الترخيص': '', 'تاريخ اعتماد المطالبة': '', 'تاريخ اللجنة العليا': '', 'تاريخ تقديم الطلب': '',
+      'قيمة مطالبة التقادم': '', 'اعتماد التقادم': '', 'بداية المطالبة': '', 'نهاية المطالبة': '',
+      'المساحة المنزرعة': '', 'عدد الابار': 1,
+      'كمية المياه المرخصة ( م^3 /يوم )': '', _sure: sure
+    };
+    if (type === 'ترخيص') {
+      R['قيمة مطالبة الترخيص'] = total;
+      R['تاريخ اللجنة العليا'] = allDates[0] || '';
+      R['تاريخ تقديم الطلب'] = allDates[1] || '';
+      R['كمية المياه المرخصة ( م^3 /يوم )'] = water ? water.v : '';
+    } else {
+      R['قيمة مطالبة التقادم'] = total;
+      R['بداية المطالبة'] = allDates[0] || '';
+      R['نهاية المطالبة'] = allDates[1] || '';
+      R['المساحة المنزرعة'] = areaCands[1] ? areaCands[1].v : '';
+      R['كمية المياه المرخصة ( م^3 /يوم )'] = water ? water.v + ' بالمخالفة' : '';
+    }
+    return { rows: [R] };
+  }
+
+  const api = { normPurpose, parseTitle, amountFromWords, binarize, lineMask, findCells, crop, rotate, parseMinutes, parseClaim, digits, clean, num, MIN_COLS };
+  if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.Engine = api;
+})(typeof self !== 'undefined' ? self : this);
+
+</script>
+<script>
+function rasdMain() {
+'use strict';
+const $ = s => document.querySelector(s);
+const el = (tag, attrs, ...kids) => { const e = document.createElement(tag); if (attrs) for (const k in attrs) { if (k === 'class') e.className = attrs[k]; else if (k.startsWith('on')) e[k] = attrs[k]; else e.setAttribute(k, attrs[k]); } for (const k of kids) if (k != null) e.append(k); return e; };
+const store = { get(k) { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} } };
+
+// ---------- الأقسام ----------
+const tabs = ['min', 'clm', 'db', 'about'];
+function show(t) { tabs.forEach(x => { $('#t-' + x).setAttribute('aria-selected', x === t); $('#p-' + x).hidden = x !== t; }); store.set('tab', t); }
+tabs.forEach(t => $('#t-' + t).onclick = () => show(t));
+show(store.get('tab') || 'min');
+document.querySelectorAll('[data-copy]').forEach(b => b.onclick = async () => {
+  try { await navigator.clipboard.writeText(b.dataset.copy); b.textContent = 'اتنسخ'; }
+  catch (e) { const r = document.createRange(); r.selectNodeContents(b.previousElementSibling); const s = getSelection(); s.removeAllRanges(); s.addRange(r); b.textContent = 'انسخه من التحديد'; }
+  setTimeout(() => { b.textContent = 'نسخ'; }, 2000);
+});
+document.querySelectorAll('[data-pick]').forEach(b => b.onclick = () => $('#' + b.dataset.pick).click());
+
+// ---------- المكتبات ----------
+const libsOk = () => window.pdfjsLib && window.XLSX && window.Tesseract;
+function libError() { const m = $('#libmsg'); m.hidden = false; m.textContent = 'مكتبات القراءة ما اتحملتش. اتأكد من النت وافتح الصفحة تاني.'; }
+if (window.pdfjsLib) {
+  const src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  try { pdfjsLib.GlobalWorkerOptions.workerPort = new Worker(URL.createObjectURL(new Blob(["importScripts('" + src + "')"], { type: 'text/javascript' }))); }
+  catch (e) { pdfjsLib.GlobalWorkerOptions.workerSrc = src; }
+}
+
+// ---------- القراءة (Tesseract جوه المتصفح) ----------
+let pool = null;
+async function getPool(onMsg) {
+  if (pool) return pool;
+  const n = Math.max(1, Math.min(3, (navigator.hardwareConcurrency || 2) - 1));
+  const langPath = new URL('.', location.href).href.replace(/\/$/, '');
+  const ws = [];
+  for (let i = 0; i < n; i++) {
+    onMsg && onMsg('تحميل محرك القراءة (' + (i + 1) + '/' + n + ')… أول مرة بس بتاخد وقت');
+    // ملفات اللغة منشورة بامتداد .wasm، فنعدّل طلبها جوه العامل
+    const shim = "const _f=self.fetch.bind(self);self.fetch=(u,o)=>_f(String(u).replace(/\\.traineddata$/,'.traineddata.wasm'),o);" +
+      "importScripts('https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/worker.min.js');";
+    const w = await Tesseract.createWorker('ara+eng', 1, {
+      workerPath: URL.createObjectURL(new Blob([shim], { type: 'text/javascript' })), workerBlobURL: false,
+      corePath: 'https://cdn.jsdelivr.net/npm/tesseract.js-core@5.1.1',
+      langPath, gzip: false
+    });
+    await w.setParameters({ preserve_interword_spaces: '1' });
+    ws.push({ w, q: Promise.resolve(), busy: 0, psm: '' });
+  }
+  pool = ws;
+  return pool;
+}
+const PSM = { page: '6', text: '6', num: '7', line: '7' };
+const cv = document.createElement('canvas');
+function toCanvas(c) {
+  const k = document.createElement('canvas'); k.width = c.w; k.height = c.h;
+  const ctx = k.getContext('2d'); const im = ctx.createImageData(c.w, c.h);
+  for (let i = 0, j = 0; i < c.data.length; i++, j += 4) { const v = c.data[i]; im.data[j] = im.data[j + 1] = im.data[j + 2] = v; im.data[j + 3] = 255; }
+  ctx.putImageData(im, 0, 0); return k;
+}
+function ocr(c, kind) {
+  const slot = pool.reduce((a, b) => (b.busy < a.busy ? b : a));
+  slot.busy++;
+  const p = slot.q.then(async () => {
+    if (cancelFlag) return '';
+    const psm = PSM[kind] || '6';
+    if (slot.psm !== psm) { await slot.w.setParameters({ tessedit_pageseg_mode: psm }); slot.psm = psm; }
+    const r = await slot.w.recognize(toCanvas(c));
+    return r.data.text || '';
+  }).finally(() => { slot.busy--; });
+  slot.q = p.catch(() => {});
+  return p;
+}
+
+// ---------- تحويل الملفات لصور ----------
+async function* pagesOf(files, onMsg) {
+  for (const f of files) {
+    if (f.type === 'application/pdf' || /\.pdf$/i.test(f.name)) {
+      const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(await f.arrayBuffer()) }).promise;
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const v1 = page.getViewport({ scale: 1 });
+        const scale = Math.min(4.2, 3508 / Math.max(v1.width, v1.height));
+        const vp = page.getViewport({ scale });
+        const k = document.createElement('canvas'); k.width = Math.round(vp.width); k.height = Math.round(vp.height);
+        const ctx = k.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, k.width, k.height);
+        await page.render({ canvasContext: ctx, viewport: vp }).promise;
+        yield { canvas: k, label: f.name + ' — صفحة ' + i, page: i, total: pdf.numPages, file: f.name };
+        page.cleanup();
+      }
+    } else if (/^image\//.test(f.type) || /\.(jpe?g|png|webp|heic)$/i.test(f.name)) {
+      const bmp = await createImageBitmap(f, { imageOrientation: 'from-image' });
+      const s = Math.min(1, 2600 / Math.max(bmp.width, bmp.height));
+      const k = document.createElement('canvas'); k.width = Math.round(bmp.width * s); k.height = Math.round(bmp.height * s);
+      k.getContext('2d').drawImage(bmp, 0, 0, k.width, k.height);
+      yield { canvas: k, label: f.name, page: 1, total: 1, file: f.name };
+    }
+  }
+}
+function grayOf(k) {
+  const d = k.getContext('2d').getImageData(0, 0, k.width, k.height).data;
+  const g = new Uint8Array(k.width * k.height);
+  for (let i = 0, j = 0; i < g.length; i++, j += 4) g[i] = (d[j] * 0.299 + d[j + 1] * 0.587 + d[j + 2] * 0.114) | 0;
+  return { data: g, w: k.width, h: k.height };
+}
+function thumb(k) { const s = Math.min(1, 1500 / k.width); const t = document.createElement('canvas'); t.width = k.width * s; t.height = k.height * s; t.getContext('2d').drawImage(k, 0, 0, t.width, t.height); return t.toDataURL('image/jpeg', 0.7); }
+async function countPages(files) {
+  let n = 0;
+  for (const f of files) {
+    if (f.type === 'application/pdf' || /\.pdf$/i.test(f.name)) { const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(await f.arrayBuffer()) }).promise; n += pdf.numPages; }
+    else n++;
+  }
+  return n;
+}
+
+// ---------- الأعمدة ----------
+const MIN_HEAD = ['الصفحة', 'تاريخ اللجنة', 'الموقف من الترخيص', 'نوع الري', 'ملاحظات الطلب', 'الاسم', 'رقم الملف', 'المحافظة', 'المنطقة', 'المساحة (س)', 'المساحة (ط)', 'المساحة (ف)', 'عدد الآبار',
+  'E درجة', 'E دقيقة', 'E ثانية', 'N درجة', 'N دقيقة', 'N ثانية', 'العمق', 'القطر', 'نوع الخزان', 'كمية المياه م3/يوم',
+  'المنسوب الاستاتيكي', 'الملوحة', 'استخدام البئر', 'الغرض', 'نوع الزراعات', 'سيريال العداد', 'قراءة العداد (م3)'];
+const MIN_NEED = ['تاريخ اللجنة', 'الاسم', 'رقم الملف', 'المحافظة', 'المنطقة', 'المساحة (ف)', 'E درجة', 'E دقيقة', 'E ثانية', 'N درجة', 'N دقيقة', 'N ثانية', 'العمق', 'القطر', 'كمية المياه م3/يوم', 'الغرض'];
+// نفس ترتيب وأسماء شيت المطالبات
+const CLM_HEAD = ['م', 'ملاحظات', 'الاسم', 'المحافظة', 'المساحة الكلية', 'قيمة مطالبة الترخيص', 'تاريخ  اعتماد المطالبة', 'تاريخ اللجنة العليا ', 'تاريخ تقديم الطلب ',
+  'قيمة مطالبة التقادم', 'اعتماد التقادم', 'بداية المطالبة', 'نهاية المطالبة', 'المساحة المنزرعة', 'عدد الابار', 'كمية المياه المرخصة ( م^3 /يوم )'];
+const CLM_SHOW = ['م', 'رقم المنظومة', 'نوع المطالبة', 'الاسم', 'المحافظة', 'المساحة الكلية', 'الإجمالي', 'تاريخ اعتماد المطالبة', 'تاريخ اللجنة العليا', 'تاريخ تقديم الطلب', 'بداية المطالبة', 'نهاية المطالبة', 'المساحة المنزرعة', 'عدد الابار', 'كمية المياه'];
+const DATE_COLS = new Set(['تاريخ اللجنة', 'تاريخ اعتماد المطالبة', 'تاريخ اللجنة العليا', 'تاريخ تقديم الطلب', 'بداية المطالبة', 'نهاية المطالبة']);
+const WIDE = { 'الاسم': 'long', 'المنطقة': 'mid', 'ملاحظات الطلب': 'mid', 'الموقف من الترخيص': 'mid', 'نوع الزراعات': 'mid' };
+
+// ---------- الحالة ----------
+const state = { min: store.get('rows-min') || [], clm: store.get('rows-clm') || [], imgs: {} };
+let cancelFlag = false;
+function save(kind) { store.set('rows-' + kind, state[kind]); }
+
+function claimView(r) {
+  const lic = r['نوع المطالبة'] === 'ترخيص';
+  return {
+    'م': r['م'], 'رقم المنظومة': r['رقم المنظومة'], 'نوع المطالبة': r['نوع المطالبة'], 'الاسم': r['الاسم'], 'المحافظة': r['المحافظة'],
+    'المساحة الكلية': r['المساحة الكلية'], 'الإجمالي': lic ? r['قيمة مطالبة الترخيص'] : r['قيمة مطالبة التقادم'],
+    'تاريخ اعتماد المطالبة': r['تاريخ اعتماد المطالبة'], 'تاريخ اللجنة العليا': r['تاريخ اللجنة العليا'], 'تاريخ تقديم الطلب': r['تاريخ تقديم الطلب'],
+    'بداية المطالبة': r['بداية المطالبة'], 'نهاية المطالبة': r['نهاية المطالبة'], 'المساحة المنزرعة': r['المساحة المنزرعة'],
+    'عدد الابار': r['عدد الابار'], 'كمية المياه': r['كمية المياه المرخصة ( م^3 /يوم )']
+  };
+}
+function setClaim(r, k, v) {
+  const lic = r['نوع المطالبة'] === 'ترخيص';
+  if (k === 'الإجمالي') r[lic ? 'قيمة مطالبة الترخيص' : 'قيمة مطالبة التقادم'] = v;
+  else if (k === 'كمية المياه') r['كمية المياه المرخصة ( م^3 /يوم )'] = v;
+  else r[k] = v;
+  if (k === 'نوع المطالبة') { // نقل الإجمالي للعمود الصح
+    const t = r['قيمة مطالبة الترخيص'] || r['قيمة مطالبة التقادم'];
+    r['قيمة مطالبة الترخيص'] = v === 'ترخيص' ? t : ''; r['قيمة مطالبة التقادم'] = v === 'ترخيص' ? '' : t;
+  }
+}
+const needClaim = r => {
+  const lic = r['نوع المطالبة'] === 'ترخيص';
+  return ['م', 'رقم المنظومة', 'الاسم', 'المحافظة', 'المساحة الكلية', 'الإجمالي', 'تاريخ اعتماد المطالبة', 'عدد الابار', 'كمية المياه']
+    .concat(lic ? ['تاريخ اللجنة العليا', 'تاريخ تقديم الطلب'] : ['بداية المطالبة', 'نهاية المطالبة', 'المساحة المنزرعة']);
+};
+function parseVal(k, t) {
+  t = Engine.digits(t.trim());
+  if (k === 'الاسم' || k === 'الموقف من الترخيص' || k === 'نوع الري' || k === 'ملاحظات الطلب' || k === 'استخدام البئر' || k === 'المنطقة' || k === 'المحافظة' || k === 'نوع الزراعات' || k === 'الغرض' || k === 'نوع الخزان' || k === 'القطر' || k === 'رقم الملف' || k === 'سيريال العداد' || k === 'كمية المياه' || k === 'نوع المطالبة') return t;
+  if (DATE_COLS.has(k)) { const m = t.match(/(20\d\d)\D(\d{1,2})\D(\d{1,2})|(\d{1,2})\D(\d{1,2})\D(20\d\d)/); if (!m) return t; return m[1] ? `${m[1]}-${m[2].padStart(2, '0')}-${m[3].padStart(2, '0')}` : `${m[6]}-${m[5].padStart(2, '0')}-${m[4].padStart(2, '0')}`; }
+  const n = t.replace(/[,،٫]/g, '.'); return /^-?\d+(\.\d+)?$/.test(n) ? Number(n) : t;
+}
+
+// ---------- جدول المراجعة ----------
+function renderTable(kind) {
+  const out = $('#out-' + kind); out.textContent = '';
+  const rows = state[kind];
+  if (!rows.length) {
+    const es = el('div', { class: 'empty-state' }, el('h3', null, kind === 'min' ? 'لسه مفيش محاضر' : 'لسه مفيش مطالبات'),
+      el('ol', null,
+        el('li', null, kind === 'min' ? 'ارفع ملف المحاضر' : 'ارفع صور أو PDF المطالبات'),
+        el('li', null, 'استنى لحد ما القراءة تخلص (بتشوف التقدم فوق)'),
+        el('li', null, 'راجع الخانات الصفرا وعدّل أي خانة بالضغط عليها'),
+        el('li', null, 'نزّل Excel')));
+    out.append(es); return;
+  }
+  const head = kind === 'min' ? MIN_HEAD : CLM_SHOW;
+  let blanks = 0;
+  const tb = el('tbody');
+  rows.forEach((r, ri) => {
+    const view = kind === 'min' ? r : claimView(r);
+    const need = kind === 'min' ? MIN_NEED : needClaim(r);
+    const tr = el('tr', r._warn ? { class: 'warnrow', title: r._warn } : null);
+    const tools = el('td', { class: 'tool' });
+    if (state.imgs[r._img]) tools.append(el('button', { onclick: () => openImg(r._img, r._label), title: 'شوف الصفحة الأصلية' }, 'الصورة'));
+    tools.append(el('button', { onclick: () => { rows.splice(ri, 1); save(kind); renderTable(kind); }, title: 'حذف الصف' }, 'حذف'));
+    tr.append(tools);
+    head.forEach(k => {
+      const v = view[k];
+      const isEmpty = (v === '' || v == null) && need.includes(k);
+      if (isEmpty) blanks++;
+      const td = el('td', { contenteditable: 'true', class: [WIDE[k] || '', isEmpty ? 'empty' : '', (k === 'الإجمالي' && r._sure === false && v !== '') ? 'unsure' : ''].join(' ').trim() }, v == null ? '' : String(v));
+      td.addEventListener('blur', () => {
+        const nv = parseVal(k, td.textContent);
+        if (kind === 'min') r[k] = nv; else { setClaim(r, k, nv); if (k === 'الإجمالي') r._sure = true; }
+        td.classList.toggle('empty', (nv === '' || nv == null) && need.includes(k));
+        td.classList.remove('unsure');
+        save(kind); updateStats();
+      });
+      td.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); td.blur(); } });
+      tr.append(td);
+    });
+    tb.append(tr);
+  });
+  const stats = el('div', { class: 'stats' });
+  function updateStats() { stats.textContent = ''; stats.append(el('span', null, 'الصفوف: ', el('b', null, String(rows.length))), el('span', null, 'خانات محتاجة مراجعة: ', el('b', null, String(out.querySelectorAll('td.empty,td.unsure').length))), el('span', { class: 'legend' }, el('i'), 'فاضية أو مش متأكد منها')); }
+  const bar = el('div', { class: 'bar' },
+    el('button', { class: 'btn primary', onclick: () => exportKind(kind) }, 'تنزيل Excel'),
+    el('button', { class: 'btn', onclick: () => { rows.length = 0; save(kind); renderTable(kind); } }, 'مسح الجدول'));
+  const box = el('div', { class: 'tablebox' }, el('table', null, el('thead', null, el('tr', null, el('th', null, ''), ...head.map(h => el('th', null, h)))), tb));
+  out.append(el('div', { style: 'display:grid;gap:10px' }, el('div', { class: 'bar', style: 'justify-content:space-between' }, stats, bar), box));
+  updateStats();
+}
+function openImg(id, label) { $('#viewer-img').src = state.imgs[id]; $('#viewer-t').textContent = label || ''; $('#viewer').hidden = false; }
+$('#viewer-x').onclick = () => { $('#viewer').hidden = true; };
+$('#viewer').onclick = e => { if (e.target.id === 'viewer') $('#viewer').hidden = true; };
+
+// ---------- التشغيل ----------
+async function run(kind, files) {
+  if (!libsOk()) return libError();
+  files = [...files]; if (!files.length) return;
+  cancelFlag = false;
+  const pr = $('#pr-' + kind), pt = $('#pr-' + kind + '-t'), pm = $('#pr-' + kind + '-m');
+  pr.hidden = false; pm.style.width = '0';
+  const t0 = Date.now();
+  try {
+    await getPool(m => { pt.textContent = m; });
+    const total = await countPages(files);
+    let done = 0, added = 0;
+    for await (const pg of pagesOf(files)) {
+      if (cancelFlag) break;
+      const id = 'i' + Date.now() + Math.random().toString(36).slice(2, 6);
+      state.imgs[id] = thumb(pg.canvas);
+      const img = grayOf(pg.canvas);
+      const tick = (a, b) => {
+        const frac = (done + (b ? a / b : 0)) / total;
+        pm.style.width = (frac * 100).toFixed(1) + '%';
+        const el2 = (Date.now() - t0) / 1000, left = frac > 0.02 ? Math.round(el2 / frac - el2) : null;
+        pt.textContent = 'بقرا ' + pg.label + ' (' + (done + 1) + ' من ' + total + ')' + (left != null ? ' — باقي حوالي ' + (left > 90 ? Math.round(left / 60) + ' دقيقة' : left + ' ثانية') : '');
+      };
+      tick(0, 1);
+      let res;
+      try { res = kind === 'min' ? await Engine.parseMinutes(img, ocr, tick) : await Engine.parseClaim(img, ocr, tick); }
+      catch (e) { res = { rows: [], error: 'حصل خطأ في القراءة' }; console.error(e); }
+      if (!res.rows.length) {
+        const blank = kind === 'min' ? Object.fromEntries(MIN_HEAD.map(h => [h, ''])) : { 'نوع المطالبة': 'ترخيص' };
+        res.rows = [Object.assign(blank, { _warn: res.error || 'مالقيتش بيانات في الصفحة دي' })];
+      }
+      const appr = $('#appr').value;
+      for (const r of res.rows) {
+        delete r._raw;
+        r._img = id; r._label = pg.label;
+        if (kind === 'min') { r['الصفحة'] = pg.page; r['تاريخ اللجنة'] = $('#cdate').value || ''; }
+        else if (appr) { r['تاريخ اعتماد المطالبة'] = appr; if (r['نوع المطالبة'] === 'استهلاك') r['اعتماد التقادم'] = appr; }
+        state[kind].push(r); added++;
+      }
+      done++; save(kind); renderTable(kind);
+      await new Promise(r => setTimeout(r, 0));
+    }
+    pm.style.width = '100%';
+    pt.textContent = cancelFlag ? 'اتوقفت. اتضاف ' + added + ' صف.' : 'خلصت: اتضاف ' + added + ' صف من ' + total + ' صفحة. راجع الخانات الصفرا ونزّل Excel.';
+  } catch (e) {
+    console.error(e);
+    pt.textContent = 'محرك القراءة ما اشتغلش على الجهاز ده. جرّب متصفح Chrome أو افتح الصفحة من الكمبيوتر. (' + (e && e.message ? e.message : e) + ')';
+  }
+}
+['min', 'clm'].forEach(kind => {
+  $('#f-' + kind).onchange = e => { run(kind, e.target.files); e.target.value = ''; };
+  $('#stop-' + kind).onclick = () => { cancelFlag = true; };
+  const d = document.querySelector('.drop[data-kind="' + kind + '"]');
+  d.addEventListener('dragover', e => { e.preventDefault(); d.classList.add('over'); });
+  d.addEventListener('dragleave', () => d.classList.remove('over'));
+  d.addEventListener('drop', e => { e.preventDefault(); d.classList.remove('over'); run(kind, e.dataTransfer.files); });
+  renderTable(kind);
+});
+$('#apply-min').onclick = () => {
+  const d = $('#cdate').value; if (!d) return flash('اختار تاريخ اللجنة الأول.');
+  state.min.forEach(r => { r['تاريخ اللجنة'] = d; }); save('min'); renderTable('min');
+};
+$('#apply-clm').onclick = () => {
+  const appr = $('#appr').value, ms = parseInt(Engine.digits($('#mstart').value), 10);
+  state.clm.forEach((r, i) => {
+    if (appr) { r['تاريخ اعتماد المطالبة'] = appr; r['اعتماد التقادم'] = r['نوع المطالبة'] === 'استهلاك' ? appr : ''; }
+    if (!isNaN(ms)) r['م'] = ms + i;
+  });
+  save('clm'); renderTable('clm');
+};
+
+// ---------- Excel ----------
+const toDate = v => { if (!v) return ''; const m = String(v).match(/^(\d{4})-(\d{2})-(\d{2})$/); return m ? new Date(Date.UTC(+m[1], +m[2] - 1, +m[3])) : v; };
+function claimRow(r) {
+  const lic = r['نوع المطالبة'] === 'ترخيص';
+  return [r['م'], r['رقم المنظومة'], r['الاسم'], r['المحافظة'], r['المساحة الكلية'],
+    lic ? r['قيمة مطالبة الترخيص'] : '', toDate(r['تاريخ اعتماد المطالبة']), lic ? toDate(r['تاريخ اللجنة العليا']) : '', lic ? toDate(r['تاريخ تقديم الطلب']) : '',
+    lic ? '' : r['قيمة مطالبة التقادم'], lic ? '' : toDate(r['اعتماد التقادم'] || r['تاريخ اعتماد المطالبة']), lic ? '' : toDate(r['بداية المطالبة']), lic ? '' : toDate(r['نهاية المطالبة']),
+    lic ? '' : r['المساحة المنزرعة'], r['عدد الابار'], r['كمية المياه المرخصة ( م^3 /يوم )']].map(v => v == null ? '' : v);
+}
+async function saveBook(aoa, sheetName, filename, widths) {
+  const ws = XLSX.utils.aoa_to_sheet(aoa, { cellDates: true, dateNF: 'yyyy/mm/dd' });
+  for (const addr in ws) { if (addr[0] !== '!' && ws[addr].t === 'd') ws[addr].z = 'yyyy/mm/dd'; }
+  ws['!cols'] = aoa[0].map((h, i) => ({ wch: (widths && widths[i]) || Math.max(10, String(h).length + 2) }));
+  ws['!views'] = [{ RTL: true }];
+  const wb = XLSX.utils.book_new(); wb.Workbook = { Views: [{ RTL: true }] };
+  XLSX.utils.book_append_sheet(wb, ws, sheetName);
+  const buf = XLSX.write(wb, { type: 'array', bookType: 'xlsx', cellDates: true });
+  const blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = filename;
+  document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+function flash(t) { const m = $('#libmsg'); m.hidden = false; m.textContent = t; setTimeout(() => { m.hidden = true; }, 6000); }
+const today = () => new Date().toISOString().slice(0, 10);
+function exportKind(kind) {
+  if (kind === 'min') {
+    const aoa = [MIN_HEAD].concat(state.min.map(r => MIN_HEAD.map(h => r[h] == null ? '' : (h === 'تاريخ اللجنة' ? toDate(r[h]) : r[h]))));
+    saveBook(aoa, 'محاضر لجان', 'محاضر لجان ' + today() + '.xlsx', MIN_HEAD.map(h => h === 'الاسم' ? 60 : h === 'المنطقة' ? 28 : 0));
+  } else {
+    const aoa = [CLM_HEAD].concat(state.clm.map(claimRow));
+    saveBook(aoa, 'مطالبات', 'مطالبات ' + today() + '.xlsx', CLM_HEAD.map(h => h === 'الاسم' ? 60 : 0));
+  }
+}
+
+// ---------- قاعدة البيانات ----------
+const xl = { min: [], clm: [] };
+const keyOf = v => {
+  const s = Engine.digits(String(v == null ? '' : v)).trim();
+  const m = s.match(/^(\d{1,5})\s*[-\/]\s*20\d\d$/) || s.match(/^20\d\d\s*[-\/]\s*(\d{1,5})$/) || s.match(/^(\d{1,5})(?:\.0+)?$/);
+  return m ? String(Number(m[1])) : '';
+};
+function sheetRows(wb, mustHave) {
+  for (const n of wb.SheetNames) {
+    const a = XLSX.utils.sheet_to_json(wb.Sheets[n], { header: 1, raw: true, defval: '' });
+    const hi = a.findIndex(r => mustHave.every(h => r.some(c => String(c).trim() === h)));
+    if (hi < 0) continue;
+    const head = a[hi].map(c => String(c).trim());
+    return a.slice(hi + 1).map(r => Object.fromEntries(head.map((h, i) => [h, r[i]])));
+  }
+  return null;
+}
+['min', 'clm'].forEach(kind => {
+  $('#x-' + kind).onchange = async e => {
+    for (const f of e.target.files) {
+      try {
+        const wb = XLSX.read(await f.arrayBuffer(), { cellDates: true });
+        const rows = kind === 'min' ? sheetRows(wb, ['رقم الملف', 'الاسم']) : sheetRows(wb, ['الاسم', 'قيمة مطالبة الترخيص']);
+        if (!rows) { flash('الملف ' + f.name + ' مش بالشكل المتوقع (مالقيتش عناوين الأعمدة).'); continue; }
+        xl[kind].push({ name: f.name, rows });
+      } catch (err) { flash('ما قدرتش أفتح ' + f.name); }
+    }
+    e.target.value = '';
+    const ul = $('#xl-' + kind); ul.textContent = '';
+    xl[kind].forEach(x => ul.append(el('li', null, x.name + ' (' + x.rows.length + ' صف)')));
+  };
+});
+const ymd = v => {
+  if (v instanceof Date) { const d = new Date(v.getTime() + 12 * 3600e3); return d.getUTCFullYear() + '-' + String(d.getUTCMonth() + 1).padStart(2, '0') + '-' + String(d.getUTCDate()).padStart(2, '0'); }
+  if (typeof v === 'number' && v > 20000 && v < 80000) return ymd(new Date(Date.UTC(1899, 11, 30) + v * 86400e3));
+  const m = Engine.digits(String(v || '')).match(/(20\d\d)\D(\d{1,2})\D(\d{1,2})/); return m ? `${m[1]}-${m[2].padStart(2, '0')}-${m[3].padStart(2, '0')}` : '';
+};
+const baseName = n => String(n || '').replace(/\s*-\s*(بئر\s*\d+|[A-Za-z]{1,4}[-.\d]+)\s*$/, '').trim();
+let dbRows = [];
+$('#build-db').onclick = () => {
+  const files = new Map();
+  const minAll = state.min.concat(...xl.min.map(x => x.rows));
+  for (const r of minAll) {
+    const k = keyOf(r['رقم الملف']); if (!k) continue;
+    const f = files.get(k) || { key: k, fileNo: String(r['رقم الملف']), name: baseName(r['الاسم']), gov: r['المحافظة'] || '', wells: 0, rows: 0, area: '', lic: 0, cons: 0, nl: 0, nc: 0, hasMin: true, cdate: '', ldates: [] };
+    if (!f.cdate && r['تاريخ اللجنة']) f.cdate = ymd(r['تاريخ اللجنة']);
+    f.rows++;
+    const w = Number(r['عدد الآبار']); if (w > f.wells) f.wells = w;
+    if (f.area === '' && r['المساحة (ف)'] !== '' && r['المساحة (ف)'] != null) f.area = r['المساحة (ف)'];
+    if (!f.gov && r['المحافظة']) f.gov = r['المحافظة'];
+    files.set(k, f);
+  }
+  const claimsAll = state.clm.map(r => ({ key: keyOf(r['رقم المنظومة']), ldate: r['تاريخ اللجنة العليا'], name: r['الاسم'], gov: r['المحافظة'], area: r['المساحة الكلية'], lic: r['قيمة مطالبة الترخيص'], cons: r['قيمة مطالبة التقادم'], wells: r['عدد الابار'] }))
+    .concat(...xl.clm.map(x => x.rows.map(r => ({ key: keyOf(r['ملاحظات'] != null && r['ملاحظات'] !== '' ? r['ملاحظات'] : r['رقم المنظومة']), ldate: r['تاريخ اللجنة العليا'], name: r['الاسم'], gov: r['المحافظة'], area: r['المساحة الكلية'], lic: r['قيمة مطالبة الترخيص'], cons: r['قيمة مطالبة التقادم'], wells: r['عدد الابار'] }))));
+  for (const c of claimsAll) {
+    if (!c.key) continue;
+    let f = files.get(c.key);
+    if (!f) { f = { key: c.key, fileNo: c.key, name: typeof c.name === 'string' && !c.name.startsWith('=') ? c.name : '', gov: c.gov || '', wells: Number(c.wells) || 0, rows: 0, area: c.area || '', lic: 0, cons: 0, nl: 0, nc: 0, hasMin: false, cdate: '', ldates: [] }; files.set(c.key, f); }
+    if (c.ldate) { const d = ymd(c.ldate); if (d && !f.ldates.includes(d)) f.ldates.push(d); }
+    const l = Number(c.lic), s = Number(c.cons);
+    if (l) { f.lic += l; f.nl++; }
+    if (s) { f.cons += s; f.nc++; }
+  }
+  dbRows = [...files.values()].filter(f => f.hasMin || f.nl || f.nc).map(f => {
+    let st, cls;
+    if (!f.hasMin) { st = 'مطالبة بدون محضر'; cls = 'orphan'; }
+    else if (f.nl && f.nc) { st = 'صدرت المطالبتين'; cls = 'ok'; }
+    else if (f.nl) { st = 'صدرت مطالبة الترخيص فقط'; cls = 'part'; }
+    else if (f.nc) { st = 'صدرت مطالبة الاستهلاك فقط'; cls = 'part'; }
+    else { st = 'لم تصدر مطالبات'; cls = 'none'; }
+    return { 'رقم الملف': f.fileNo, 'الاسم': f.name, 'المحافظة': f.gov, 'عدد الآبار': f.wells || f.rows || '', 'المساحة (ف)': f.area,
+      'تاريخ اللجنة': f.cdate, 'مطالبة الترخيص': f.nl ? Math.round(f.lic * 100) / 100 : '', 'مطالبة الاستهلاك': f.nc ? Math.round(f.cons * 100) / 100 : '', 'الحالة': st,
+      'ملاحظة': (f.cdate && f.ldates.length && !f.ldates.includes(f.cdate)) ? 'تاريخ اللجنة في مطالبة الترخيص مختلف (' + f.ldates.join('، ') + ')، ممكن تكون مطالبة سنة تانية' : '',
+      _cls: cls, _min: f.hasMin };
+  }).sort((a, b) => (b._min - a._min) || (Number(keyOf(a['رقم الملف'])) - Number(keyOf(b['رقم الملف']))));
+  renderDb();
+};
+const DB_HEAD = ['رقم الملف', 'الاسم', 'المحافظة', 'عدد الآبار', 'المساحة (ف)', 'تاريخ اللجنة', 'مطالبة الترخيص', 'مطالبة الاستهلاك', 'الحالة', 'ملاحظة'];
+function renderDb() {
+  const out = $('#out-db'); out.textContent = '';
+  if (!dbRows.length) {
+    out.append(el('div', { class: 'empty-state' }, el('h3', null, 'مفيش بيانات للربط لسه'),
+      el('ol', null, el('li', null, 'اقرا محاضر في القسم الأول، أو ضيف Excel محاضر هنا'), el('li', null, 'اقرا مطالبات في القسم التاني، أو ضيف شيت المطالبات بتاعك'), el('li', null, 'دوس "اربط البيانات"'))));
+    return;
+  }
+  const cnt = c => dbRows.filter(r => r._cls === c).length;
+  const stats = el('div', { class: 'stats' },
+    el('span', null, 'طلبات: ', el('b', null, String(dbRows.filter(r => r._min).length))),
+    el('span', null, 'صدر لها المطالبتين: ', el('b', null, String(cnt('ok')))),
+    el('span', null, 'مطالبة واحدة: ', el('b', null, String(cnt('part')))),
+    el('span', null, 'من غير مطالبات: ', el('b', null, String(cnt('none')))),
+    el('span', null, 'مطالبات بدون محضر: ', el('b', null, String(cnt('orphan')))),
+    el('span', null, 'تاريخ لجنة مختلف: ', el('b', null, String(dbRows.filter(r => r['ملاحظة']).length))));
+  const tb = el('tbody', null, ...dbRows.map(r => el('tr', null, ...DB_HEAD.map(h => h === 'الحالة' ? el('td', null, el('span', { class: 'pill ' + r._cls }, r[h])) : el('td', { class: h === 'الاسم' ? 'long' : (h === 'ملاحظة' && r[h] ? 'mid unsure' : '') }, String(r[h] == null ? '' : r[h]))))));
+  out.append(el('div', { style: 'display:grid;gap:10px' },
+    el('div', { class: 'bar', style: 'justify-content:space-between' }, stats, el('button', { class: 'btn primary', onclick: () => saveBook([DB_HEAD].concat(dbRows.map(r => DB_HEAD.map(h => h === 'تاريخ اللجنة' ? toDate(r[h]) : r[h]))), 'قاعدة بيانات', 'قاعدة بيانات ' + today() + '.xlsx', DB_HEAD.map(h => h === 'الاسم' ? 60 : h === 'الحالة' ? 26 : 0)) }, 'تنزيل Excel')),
+    el('div', { class: 'tablebox' }, el('table', null, el('thead', null, el('tr', null, ...DB_HEAD.map(h => el('th', null, h)))), tb))));
+}
+renderDb();
+if (!libsOk()) window.addEventListener('load', () => { if (!libsOk()) libError(); });
+}
+// المكتبات بتتحمل في الخلفية، والصفحة تظهر على طول
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', rasdMain); else rasdMain();
+</script>
+
+<script>if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));</script>
+</body>
+</html>
