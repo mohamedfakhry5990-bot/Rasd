@@ -515,6 +515,17 @@ tr.warnrow td:first-child { box-shadow: inset -3px 0 0 var(--bad); }
       if (ci < 0) continue;
       for (let r = 0; r < nRows; r++) if (rowTops[r] >= c.y - 10 && rowTops[r] < c.y + c.h - 10) grid2[r][ci] = grid2[r][ci] || c;
     }
+    // خانة ناقصة (خط الجدول مقطوع في السكان): نكوّن مكانها من حدود العمود والصف
+    for (let r = 0; r < nRows; r++) {
+      const own = grid2[r].filter(c => c && Math.abs(c.y - rowTops[r]) < 25);
+      if (!own.length) continue;
+      const hs2 = own.map(c => c.h).sort((a, b2) => a - b2), rh = hs2[hs2.length >> 1];
+      const top = Math.round(rowTops[r]), bot = Math.round(r + 1 < nRows ? Math.min(rowTops[r + 1], top + rh) : top + rh);
+      for (let ci = 0; ci < nCols; ci++) if (!grid2[r][ci]) {
+        const [a, b2] = cols[ci];
+        grid2[r][ci] = { x: Math.round(a) + 2, y: top, w: Math.max(10, Math.round(b2 - a) - 4), h: Math.max(10, bot - top), synth: true };
+      }
+    }
     // عنوان الصفحة
     const title = await ocr(crop(g, w, h, { x: tx0, y: Math.max(0, ty0 - Math.round(h * 0.07)), w: tx1 - tx0, h: Math.round(h * 0.065) }, 0), 'text');
     const seen = new Map();
